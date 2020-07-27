@@ -1,6 +1,7 @@
 package com.example.rightbiotic;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -8,6 +9,10 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -19,21 +24,18 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.vectordrawable.graphics.drawable.PathInterpolatorCompat;
-
-import com.example.rightbiotic.R;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,14 +58,19 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     public static final String MyPREFERENCES = "MyPrefs";
     public static final String Path = "path";
+
     public static String[] monthLookUp = {"ETC", "Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"};
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice bluetoothDevice;
     boolean click = true;
     public boolean connection;
+    PdfDocument.PageInfo pageInfo = null;
+    PdfDocument.Page page = null;
+    Canvas canvas = null;
     Dialog dialog;
     public String fileName;
     public String finalPath;
+    private static final int READ_REQUEST_CODE = 42;
     InputStream inputStream;
     TextView ipadd;
     Button mainBtn;
@@ -146,6 +153,8 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.pathDir.setText(MainActivity.this.finalPath);
                     }
                 });
+                File newFile;
+                FileOutputStream fOut;
                 new File(MainActivity.this.finalPath);
                 String[] pid = ((String) this.Datalist.get(0)).split(":");
                 if (pid.length > 0 && pid[1].length() > 1) {
@@ -158,27 +167,73 @@ public class MainActivity extends AppCompatActivity {
                     StringBuilder sb3 = new StringBuilder();
                     sb3.append(Environment.getExternalStorageDirectory());
                     sb3.append(MainActivity.this.finalPath);
-                    File newFile = new File(sb3.toString(), sb2);
+                    newFile = new File(sb3.toString(), sb2);
+                    StringBuilder lol = new StringBuilder();
+                    boolean outcome = false;
                     try {
                         if (!newFile.getParentFile().exists()) {
                             newFile.getParentFile().mkdirs();
                         }
                         if (!newFile.exists()) {
-                            boolean outcome = newFile.createNewFile();
+                            outcome = newFile.createNewFile();
                         }
-                        FileOutputStream fOut = new FileOutputStream(newFile);
+                        fOut = new FileOutputStream(newFile);
+
                         OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
                         for (String item : this.Datalist) {
                             StringBuilder sb22 = new StringBuilder();
                             sb22.append(item);
+                            lol.append(item);
                             sb22.append("\r\n");
+                            lol.append("\r\n");
                             myOutWriter.append(sb22.toString());
                         }
                         myOutWriter.flush();
                         fOut.close();
+
                     } catch (IOException e32) {
-                        Log.d("File write:", String.valueOf(false));
+                        Log.d("File write:", String.valueOf(outcome));
                         e32.printStackTrace();
+                    }
+
+                    try {
+                        PdfDocument pdfDocument = new PdfDocument();
+                        Paint paint = new Paint();
+                        pageInfo = new PdfDocument.PageInfo.Builder(1200,2120, 1).create();
+                        page = pdfDocument.startPage(pageInfo);
+                        canvas = page.getCanvas();
+                        String[] str = lol.toString().split("\n");
+                        paint.setColor(Color.BLACK);
+                        paint.setTextSize(35f);
+                        paint.setTextAlign(Paint.Align.LEFT);
+                        canvas.drawText(str[0], 20, 50, paint);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(2);
+                        canvas.drawRect(20, 80, 1180, 860, paint);
+                        paint.setTextAlign(Paint.Align.LEFT);
+                        paint.setStyle(Paint.Style.FILL);
+                        canvas.drawText("Sno.", 40, 830, paint);
+                        canvas.drawText("Anti-Biotic", 200, 830, paint);
+                        canvas.drawText("Result", 700, 830, paint);
+
+                        canvas.drawLine(180,790, 180, 840, paint);
+                        canvas.drawLine(680,790, 680, 840, paint);
+                        int x = 0;
+                        for (String line: str) {
+                            if(!line.equals("END") && x>4){
+                                canvas.drawText(Integer.toString(x-4), 40, 950 + (x-5)*100, paint);
+                                String[] val = line.split(",");
+                                canvas.drawText(val[0], 200, 950 + (x-5)*100, paint);
+                                canvas.drawText(val[1], 700, 950 + (x-5)*100, paint);
+                            }
+                            x++;
+                            if(line.equals("END"))
+                                break;
+                        }
+                        pdfDocument.finishPage(page);
+                        pdfDocument.writeTo(new FileOutputStream(newFile));
+                    } catch (Exception e){
+                        e.printStackTrace();
                     }
                 }
             } else {
@@ -229,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /* access modifiers changed from: protected */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -239,44 +293,45 @@ public class MainActivity extends AppCompatActivity {
         this.sharedpreferences = sharedPreferences;
         this.pathDir.setText(sharedPreferences.getString(Path, "/storage/sdcard0/RightBiotic"));
         this.openFiles = (Button) findViewById(R.id.showFiles);
-        TextView textView = (TextView) findViewById(R.id.serverAddress);
-        this.ipadd = textView;
+        openFiles.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick (View v){
+                performSearch();
+            }
+        });
+        this.ipadd = findViewById(R.id.serverAddress);
         WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
         String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-        textView.setText(ip);
-        TextView textView2 = (TextView) findViewById(R.id.outputTextView);
-        this.outputView = textView2;
-        textView2.setMovementMethod(new ScrollingMovementMethod());
+        this.ipadd.setText(ip);
+        this.outputView = findViewById(R.id.outputTextView);
+        outputView.setMovementMethod(new ScrollingMovementMethod());
         StartServer();
     }
 
-//    public void popUp() {
-//        this.popUp = new PopupWindow(this);
-//        final LinearLayout layout = new LinearLayout(this);
-//        LinearLayout mainLayout = new LinearLayout(this);
-//        TextView tv = new TextView(this);
-//        Button but = new Button(this);
-//        but.setText("Click Me");
-//        but.setOnClickListener(new OnClickListener() {
-//            public void onClick(View v) {
-//                if (MainActivity.this.click) {
-//                    MainActivity.this.popUp.showAtLocation(layout, 80, 10, 10);
-//                    MainActivity.this.popUp.update(50, 50, 300, 80);
-//                    MainActivity.this.click = false;
-//                    return;
-//                }
-//                MainActivity.this.popUp.dismiss();
-//                MainActivity.this.click = true;
-//            }
-//        });
-//        LayoutParams params = new LayoutParams(-2, -2);
-//        layout.setOrientation(1);
-//        tv.setText("Hi this is a sample text for popup window");
-//        layout.addView(tv, params);
-//        this.popUp.setContentView(layout);
-//        mainLayout.addView(but, params);
-//        setContentView((View) mainLayout);
-//    }
+    public String readText(String input){
+        File file = new File(Environment.getExternalStorageDirectory(), input);
+        StringBuilder sb = new StringBuilder();
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+            while((line = br.readLine())!= null){
+                sb.append(line);
+                sb.append("\n");
+            }
+            br.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return sb.toString();
+    }
+
+    private void performSearch(){
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("text/*");
+        startActivityForResult(intent, READ_REQUEST_CODE);
+
+    }
 
     public void StartServer() {
         this.updateConversationHandler = new Handler();
@@ -292,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void onRequestPermissionsResult(int requestCode, String[] permissions2, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions2, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions2, grantResults);
     }
 
@@ -338,133 +393,16 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("error", "ERROR");
             }
         }
-    }
-
-    public void OnCLickExit(View view) {
-        finish();
-    }
-
-    @SuppressLint("WrongConstant")
-    public void OnClickPrint(View view) {
-        if (((BluetoothManager) getApplicationContext().getSystemService("bluetooth")).getConnectedDevices(7).isEmpty()) {
-            startActivityForResult(new Intent("android.settings.BLUETOOTH_SETTINGS"), 0);
-        } else {
-        }
-    }
-
-    public void IntentPrint(String txtvalue) {
-        byte[] PrintHeader = {-86, 85, 2, 0};
-        PrintHeader[3] = (byte) txtvalue.getBytes().length;
-        InitPrinter();
-        if (PrintHeader.length > 128) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(this.value);
-            sb.append("\nValue is more than 128 size\n");
-            String sb2 = sb.toString();
-            this.value = sb2;
-            Toast.makeText(this, sb2, Toast.LENGTH_LONG).show();
-            return;
-        }
-        try {
-            this.outputStream.write(txtvalue.getBytes());
-            this.outputStream.close();
-            this.socket.close();
-        } catch (Exception ex) {
-            StringBuilder sb3 = new StringBuilder();
-            sb3.append(this.value);
-            sb3.append(ex.toString());
-            sb3.append("\nExcep IntentPrint \n");
-            String sb4 = sb3.toString();
-            this.value = sb4;
-            Toast.makeText(this, sb4, Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void InitPrinter() {
-        BluetoothAdapter defaultAdapter = BluetoothAdapter.getDefaultAdapter();
-        this.bluetoothAdapter = defaultAdapter;
-        try {
-            if (!defaultAdapter.isEnabled()) {
-                startActivityForResult(new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE"), 0);
+        else if(requestCode == READ_REQUEST_CODE && resultCode== Activity.RESULT_OK && data!=null){
+            Uri uri = data.getData();
+            String path = uri.getPath();
+            path = path.substring(path.indexOf(":")+1);
+            if(path.contains("emulated")) {
+                path = path.substring(path.indexOf("0") + 1);
             }
-            Set<BluetoothDevice> pairedDevices = this.bluetoothAdapter.getBondedDevices();
-            if (pairedDevices.size() > 0) {
-                Iterator it = pairedDevices.iterator();
-                if (it.hasNext()) {
-                    this.bluetoothDevice = (BluetoothDevice) it.next();
-                }
-                UUID fromString = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-                this.socket = (BluetoothSocket) this.bluetoothDevice.getClass().getMethod("createRfcommSocket", new Class[]{Integer.TYPE}).invoke(this.bluetoothDevice, new Object[]{Integer.valueOf(1)});
-                this.bluetoothAdapter.cancelDiscovery();
-                this.socket.connect();
-                this.outputStream = this.socket.getOutputStream();
-                this.inputStream = this.socket.getInputStream();
-                beginListenForData();
-                return;
-            }
-            StringBuilder sb = new StringBuilder();
-            sb.append(this.value);
-            sb.append("No Devices found");
-            String sb2 = sb.toString();
-            this.value = sb2;
-            Toast.makeText(this, sb2, Toast.LENGTH_LONG).show();
-        } catch (Exception ex) {
-            StringBuilder sb3 = new StringBuilder();
-            sb3.append(this.value);
-            sb3.append(ex.toString());
-            sb3.append("\n InitPrinter \n");
-            String sb4 = sb3.toString();
-            this.value = sb4;
-            Toast.makeText(this, sb4, Toast.LENGTH_LONG).show();
+            outputView.setText(readText(path));
         }
     }
 
-    /* access modifiers changed from: 0000 */
-    public void beginListenForData() {
-        try {
-            final Handler handler = new Handler();
-            this.stopWorker = false;
-            this.readBufferPosition = 0;
-            this.readBuffer = new byte[1024];
-            Thread thread = new Thread(new Runnable() {
-                public void run() {
-                    while (!Thread.currentThread().isInterrupted() && !MainActivity.this.stopWorker) {
-                        try {
-                            int bytesAvailable = MainActivity.this.inputStream.available();
-                            if (bytesAvailable > 0) {
-                                byte[] packetBytes = new byte[bytesAvailable];
-                                MainActivity.this.inputStream.read(packetBytes);
-                                for (int i = 0; i < bytesAvailable; i++) {
-                                    byte b = packetBytes[i];
-                                    if (b == 10) {
-                                        byte[] encodedBytes = new byte[MainActivity.this.readBufferPosition];
-                                        System.arraycopy(MainActivity.this.readBuffer, 0, encodedBytes, 0, encodedBytes.length);
-                                        final String data = new String(encodedBytes, StandardCharsets.US_ASCII);
-                                        MainActivity.this.readBufferPosition = 0;
-                                        handler.post(new Runnable() {
-                                            public void run() {
-                                                Log.d("e", data);
-                                            }
-                                        });
-                                    } else {
-                                        byte[] bArr = MainActivity.this.readBuffer;
-                                        MainActivity mainActivity = MainActivity.this;
-                                        int i2 = mainActivity.readBufferPosition;
-                                        mainActivity.readBufferPosition = i2 + 1;
-                                        bArr[i2] = b;
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            MainActivity.this.stopWorker = true;
-                        }
-                    }
-                }
-            });
-            this.workerThread = thread;
-            thread.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 }
