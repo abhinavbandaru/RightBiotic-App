@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "393166273752",
+    "firebase_url": "https://rightbiotic-c16f1.firebaseio.com",
+    "project_id": "rightbiotic-c16f1",
+    "storage_bucket": "rightbiotic-c16f1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:393166273752:android:0859883c0e744dc1edabad",
+        "android_client_info": {
+          "package_name": "com.example.rightbiotic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "393166273752-s060nu50i8tr3rsdcldjnthagkhiee0p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rightbiotic",
+            "certificate_hash": "7022714efdf0397ab36893bbb1dcd9e8e89da020"
+          }
+        },
+        {
+          "client_id": "393166273752-irrqojrp8ske0beoobp876g2f7tkop93.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUXLsFg8_4XS4VxKP0_Wq2XF1jWCOKtZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "393166273752-irrqojrp8ske0beoobp876g2f7tkop93.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

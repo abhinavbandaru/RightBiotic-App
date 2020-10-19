@@ -81,20 +81,21 @@
             android:text="Open Files"
             android:id="@+id/showFiles"/>
     </LinearLayout>
-
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20sp"
-        android:layout_marginLeft="15sp"
         android:layout_gravity="center">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="17sp"
-            android:textColor="@color/dullWhite"
             android:id="@+id/outputTextView"/>
     </ScrollView>
 
+    <ListView
+        android:id="@+id/pdfListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </ListView>
 
 </LinearLayout>

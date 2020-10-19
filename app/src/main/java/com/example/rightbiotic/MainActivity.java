@@ -1,12 +1,6 @@
 package com.example.rightbiotic;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Dialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
@@ -18,81 +12,107 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.text.format.Formatter;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.PopupWindow;
+import android.widget.ListView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     public static final String MyPREFERENCES = "MyPrefs";
     public static final String Path = "path";
 
     public static String[] monthLookUp = {"ETC", "Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"};
-    BluetoothAdapter bluetoothAdapter;
-    BluetoothDevice bluetoothDevice;
-    boolean click = true;
-    public boolean connection;
-    PdfDocument.PageInfo pageInfo = null;
-    PdfDocument.Page page = null;
-    Canvas canvas = null;
-    Dialog dialog;
-    public String fileName;
     public String finalPath;
     private static final int READ_REQUEST_CODE = 42;
-    InputStream inputStream;
     TextView ipadd;
-    Button mainBtn;
     Button openFiles;
-    OutputStream outputStream;
     TextView outputView;
     TextView pathDir;
     String[] permissions = {"android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.ACCESS_WIFI_STATE", "android.permission.INTERNET"};
-    PopupWindow popUp;
-    Button popUpClose;
-    byte[] readBuffer;
-    int readBufferPosition;
+    List<String> fileList;
+    List<String> filePathList;
+    ListView listView;
     public Uri selectedFile;
     public static ServerSocket serverSocket;
     Thread serverThread = null;
+    ArrayAdapter<String> directoryList;
     SharedPreferences sharedpreferences;
-    BluetoothSocket socket;
-    Button startServer;
-    volatile boolean stopWorker;
     Handler updateConversationHandler;
-    String value = "";
-    Thread workerThread;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ActivityCompat.requestPermissions(this, this.permissions, 1);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+        this.pathDir = findViewById(R.id.pathOfFolder);
+        SharedPreferences sharedPreferences = getSharedPreferences(MyPREFERENCES, 0);
+        listView = findViewById(R.id.pdfListView);
+        fileList = new ArrayList<>();
+        filePathList = new ArrayList<>();
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                viewPdf(fileList.get(i), filePathList.get(i));
+            }
+        });
+        this.sharedpreferences = sharedPreferences;
+        this.pathDir.setText(sharedPreferences.getString(Path, "/storage/sdcard0/RightBiotic"));
+        this.openFiles = findViewById(R.id.showFiles);
+        openFiles.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick (View v){
+                performSearch();
+            }
+        });
+        this.ipadd = findViewById(R.id.serverAddress);
+        WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
+        String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+        this.ipadd.setText(ip);
+        this.outputView = findViewById(R.id.outputTextView);
+        outputView.setMovementMethod(new ScrollingMovementMethod());
+        StartServer();
+    }
+
+    void viewPdf(String filename, String filePath){
+        System.out.println("Path: "+filePath + "/" + filename);
+        File f = new File(filePath, filename);
+        Uri path = Uri.fromFile(f);
+
+        // Setting the intent for pdf reader
+        Intent pdfIntent = new Intent(Intent.ACTION_VIEW);
+        pdfIntent.setDataAndType(path, "application/pdf");
+        pdfIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+
+        //try {
+            startActivity(pdfIntent);
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
+    }
 
     class CommunicationThread implements Runnable {
         List<String> Datalist = new ArrayList();
@@ -153,88 +173,123 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.pathDir.setText(MainActivity.this.finalPath);
                     }
                 });
-                File newFile;
-                FileOutputStream fOut;
+                int y = 60;
                 new File(MainActivity.this.finalPath);
                 String[] pid = ((String) this.Datalist.get(0)).split(":");
+                System.out.println(Datalist);
                 if (pid.length > 0 && pid[1].length() > 1) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(pid[1]);
-                    sb.append("-");
-                    sb.append(MainActivity.this.fileName);
-                    sb.append(".txt");
-                    String sb2 = sb.toString();
                     StringBuilder sb3 = new StringBuilder();
                     sb3.append(Environment.getExternalStorageDirectory());
                     sb3.append(MainActivity.this.finalPath);
-                    newFile = new File(sb3.toString(), sb2);
-                    StringBuilder lol = new StringBuilder();
-                    boolean outcome = false;
-                    try {
-                        if (!newFile.getParentFile().exists()) {
-                            newFile.getParentFile().mkdirs();
-                        }
-                        if (!newFile.exists()) {
-                            outcome = newFile.createNewFile();
-                        }
-                        fOut = new FileOutputStream(newFile);
 
-                        OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-                        for (String item : this.Datalist) {
-                            StringBuilder sb22 = new StringBuilder();
-                            sb22.append(item);
-                            lol.append(item);
-                            sb22.append("\r\n");
-                            lol.append("\r\n");
-                            myOutWriter.append(sb22.toString());
-                        }
-                        myOutWriter.flush();
-                        fOut.close();
+                    PdfDocument myPdfDocument = new PdfDocument();
+                    Paint myPaint = new Paint();
+                    myPaint.setTextSize(12f);
+                    PdfDocument.PageInfo myPageInfo1 = new PdfDocument.PageInfo.Builder(595,842,1).create();
+                    PdfDocument.Page myPage1 = myPdfDocument.startPage(myPageInfo1);
+                    Canvas canvas  = myPage1.getCanvas();
+                    canvas.drawLine(30,  22+y, myPageInfo1.getPageWidth()-30, 22+y, myPaint);
+                    canvas.drawLine(30,  47+y, myPageInfo1.getPageWidth()-30, 47+y, myPaint);
+                    canvas.drawLine(30,  65+y, myPageInfo1.getPageWidth()-30, 65+y, myPaint);
+                    canvas.drawLine(30,  85+y, myPageInfo1.getPageWidth()-30, 85+y, myPaint);
+                    canvas.drawLine(30,  105+y, myPageInfo1.getPageWidth()-30, 105+y, myPaint);
+                    canvas.drawLine(30,  22+y, 30, 105+y, myPaint);
+                    canvas.drawLine(myPageInfo1.getPageWidth()-30,  22+y, myPageInfo1.getPageWidth()-30, 105+y, myPaint);
+                    canvas.drawLine(345,  47+y, 345, 85+y, myPaint);
+                    canvas.drawLine(30,  47+y, myPageInfo1.getPageWidth()-30, 47+y, myPaint);
+                    myPaint.setTextSize(18f);
+                    myPaint.setFakeBoldText(true);
+                    myPaint.setUnderlineText(true);
+                    myPaint.setTextAlign(Paint.Align.CENTER);
+                    canvas.drawText("Laboratory Report", 298, 40+y,myPaint);
+                    myPaint.setTextSize(12f);
+                    myPaint.setFakeBoldText(false);
+                    myPaint.setTextAlign(Paint.Align.LEFT);
+                    myPaint.setUnderlineText(false);
+                    String patientName = "XXX", age = "30", sex = "M", sampleDate = "--/--/----", reportDate = "", referredBy = "Dr. YYY";
+                    String[] te = Datalist.get(1).split(" ");
+                    reportDate = te[0];
+                    canvas.drawText("Patient Name : "+patientName, 32, 60+y,myPaint);
+                    canvas.drawText("Sample Date : "+sampleDate, 350, 60+y,myPaint);
+                    canvas.drawText("Age/Sex           : "+age + " / "+sex, 32, 80+y,myPaint);
+                    canvas.drawText("Report Date   : "+reportDate, 350, 80+y,myPaint);
+                    canvas.drawText("Referred By      : "+referredBy, 32, 100+y,myPaint);
+                    String f = (String) Datalist.get(2);
+                    myPaint.setTextSize(18f);
+                    myPaint.setTextAlign(Paint.Align.CENTER);
+                    myPaint.setUnderlineText(true);
+                    myPaint.setFakeBoldText(true);
+                    canvas.drawText("CULTURE  REPORT",298, 130+y,myPaint);
+                    myPaint.setTextSize(12f);
+                    myPaint.setTextAlign(Paint.Align.LEFT);
+                    myPaint.setUnderlineText(false);
+                    myPaint.setFakeBoldText(false);
+                    canvas.drawText("Sample                 : "+f, 30, 150+y, myPaint);
+                    f = (String) Datalist.get(3);
+                    canvas.drawText("Organism Name : "+f, 30, 170+y, myPaint);
+                    f = (String) Datalist.get(4);
 
-                    } catch (IOException e32) {
-                        Log.d("File write:", String.valueOf(outcome));
-                        e32.printStackTrace();
+                    canvas.drawText("Volume                 : "+f, 30, 190+y, myPaint);
+                    int startY = 200+y;
+                    canvas.drawLine(30, startY, myPageInfo1.getPageWidth()-30, startY, myPaint);
+                    myPaint.setFakeBoldText(true);
+                    canvas.drawText("S.no", 32, startY + 15, myPaint);
+                    canvas.drawText("AntiBiotic Name",  70, startY+15, myPaint);
+                    canvas.drawText("Result",  315, startY+15, myPaint);
+                    myPaint.setFakeBoldText(false);
+                    canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
+                    for(int i = 5; i+1<Datalist.size(); i++){
+                        startY += 20;
+                        String[] k1 = Datalist.get(i).split(",");
+                        k1[0] = k1[0].trim();
+                        canvas.drawText(Integer.toString(i-4), 40, startY + 15, myPaint);
+                        canvas.drawText(k1[0], 70, startY + 15, myPaint);
+                        if(k1[1].equals("S")){
+                            myPaint.setColor(Color.rgb(34,139,34));
+                        } else if(k1[1].equals("R")){
+                            myPaint.setColor(Color.rgb(255,0,0));
+                        }
+                        myPaint.setFakeBoldText(true);
+                        canvas.drawText(k1[1],  315, startY+15, myPaint);
+                        myPaint.setFakeBoldText(false);
+                        myPaint.setColor(Color.BLACK);
+                        canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
                     }
-
+                    startY += 20;
+                    canvas.drawLine(310, 200+y, 310, startY, myPaint);
+                    canvas.drawLine(30, 200+y, 30, startY, myPaint);
+                    canvas.drawLine(565, 200+y, 565, startY, myPaint);
+                    canvas.drawLine(60, 200+y, 60, startY, myPaint);
+                    startY += 20;
+                    canvas.drawText("R: RESISTANT ", 30, startY,myPaint);
+                    canvas.drawText("S: SENSITIVE ", 290, startY,myPaint);
+                    canvas.drawText("I: INTERMEDIATE ", 470, startY,myPaint);
+                    canvas.drawText("Only for Office Use", 32, startY+30,myPaint);
+                    canvas.drawText("DEPARTMENT OF PATHOLOGY", 315, startY+30,myPaint);
+                    canvas.drawText("RIGHTBIOTIC REPORT", 32, startY+50,myPaint);
+                    canvas.drawText(referredBy, 315, startY+50,myPaint);
+                    canvas.drawText("TECHNICIAN : ", 32, startY+80,myPaint);
+                    canvas.drawText("Sign : ", 315, startY+80,myPaint);
+                    canvas.drawLine(310, startY+15, 310, startY+85, myPaint);
+                    canvas.drawLine(30, startY+15, 30, startY+85, myPaint);
+                    canvas.drawLine(280, startY+15, 280, startY+85, myPaint);
+                    canvas.drawLine(550, startY+15, 550, startY+85, myPaint);
+                    canvas.drawLine(310, startY+15, 550, startY+15, myPaint);
+                    canvas.drawLine(30, startY+15, 280, startY+15, myPaint);
+                    canvas.drawLine(310, startY+85, 550, startY+85, myPaint);
+                    canvas.drawLine(30, startY+85, 280, startY+85, myPaint);
+                    myPdfDocument.finishPage(myPage1);
+                    String fname = pid[1];
+                    fname += ".pdf";
+                    fileList.add(fname);
+                    File pdfFile = new File(sb3.toString(), fname);
+                    filePathList.add(sb3.toString());
                     try {
-                        PdfDocument pdfDocument = new PdfDocument();
-                        Paint paint = new Paint();
-                        pageInfo = new PdfDocument.PageInfo.Builder(1200,2120, 1).create();
-                        page = pdfDocument.startPage(pageInfo);
-                        canvas = page.getCanvas();
-                        String[] str = lol.toString().split("\n");
-                        paint.setColor(Color.BLACK);
-                        paint.setTextSize(35f);
-                        paint.setTextAlign(Paint.Align.LEFT);
-                        canvas.drawText(str[0], 20, 50, paint);
-                        paint.setStyle(Paint.Style.STROKE);
-                        paint.setStrokeWidth(2);
-                        canvas.drawRect(20, 80, 1180, 860, paint);
-                        paint.setTextAlign(Paint.Align.LEFT);
-                        paint.setStyle(Paint.Style.FILL);
-                        canvas.drawText("Sno.", 40, 830, paint);
-                        canvas.drawText("Anti-Biotic", 200, 830, paint);
-                        canvas.drawText("Result", 700, 830, paint);
-
-                        canvas.drawLine(180,790, 180, 840, paint);
-                        canvas.drawLine(680,790, 680, 840, paint);
-                        int x = 0;
-                        for (String line: str) {
-                            if(!line.equals("END") && x>4){
-                                canvas.drawText(Integer.toString(x-4), 40, 950 + (x-5)*100, paint);
-                                String[] val = line.split(",");
-                                canvas.drawText(val[0], 200, 950 + (x-5)*100, paint);
-                                canvas.drawText(val[1], 700, 950 + (x-5)*100, paint);
-                            }
-                            x++;
-                            if(line.equals("END"))
-                                break;
-                        }
-                        pdfDocument.finishPage(page);
-                        pdfDocument.writeTo(new FileOutputStream(newFile));
-                    } catch (Exception e){
+                        myPdfDocument.writeTo(new FileOutputStream(pdfFile));
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    myPdfDocument.close();
                 }
             } else {
                 Log.d("Cannot Store:", "File");
@@ -281,32 +336,12 @@ public class MainActivity extends AppCompatActivity {
             sb.append(this.msg);
             sb.append("\n");
             textView.setText(sb.toString());
+            directoryList = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_expandable_list_item_1, fileList);
+            listView.setAdapter(directoryList);
         }
     }
 
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ActivityCompat.requestPermissions(this, this.permissions, 1);
-        this.pathDir = (TextView) findViewById(R.id.pathOfFolder);
-        SharedPreferences sharedPreferences = getSharedPreferences(MyPREFERENCES, 0);
-        this.sharedpreferences = sharedPreferences;
-        this.pathDir.setText(sharedPreferences.getString(Path, "/storage/sdcard0/RightBiotic"));
-        this.openFiles = (Button) findViewById(R.id.showFiles);
-        openFiles.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick (View v){
-                performSearch();
-            }
-        });
-        this.ipadd = findViewById(R.id.serverAddress);
-        WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
-        String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-        this.ipadd.setText(ip);
-        this.outputView = findViewById(R.id.outputTextView);
-        outputView.setMovementMethod(new ScrollingMovementMethod());
-        StartServer();
-    }
+
 
     public String readText(String input){
         File file = new File(Environment.getExternalStorageDirectory(), input);
