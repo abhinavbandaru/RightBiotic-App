@@ -70,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
         this.pathDir = findViewById(R.id.pathOfFolder);
         SharedPreferences sharedPreferences = getSharedPreferences(MyPREFERENCES, 0);
         listView = findViewById(R.id.pdfListView);
-        fileList = new ArrayList<>();
-        filePathList = new ArrayList<>();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -93,11 +91,40 @@ public class MainActivity extends AppCompatActivity {
         this.ipadd.setText(ip);
         this.outputView = findViewById(R.id.outputTextView);
         outputView.setMovementMethod(new ScrollingMovementMethod());
+        refreshList();
         StartServer();
     }
 
+    void refreshList(){
+        fileList = new ArrayList<>();
+        filePathList = new ArrayList<>();
+        String path = Environment.getExternalStorageDirectory().toString() + "/RightBiotic";
+        System.out.println("Path: " + path);
+        File rbFolder = new File(path);
+        List<File> allFiles = getListFiles(rbFolder);
+        for(File f: allFiles){
+            System.out.println(f.getName());
+            fileList.add(f.getName());
+            filePathList.add(f.getParent());
+        }
+        directoryList = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_expandable_list_item_1, fileList);
+        listView.setAdapter(directoryList);
+    }
+
+    List<File> getListFiles(File parentDir) {
+        ArrayList<File> inFiles = new ArrayList<File>();
+        File[] files = parentDir.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                inFiles.addAll(getListFiles(file));
+            } else {
+                inFiles.add(file);
+            }
+        }
+        return inFiles;
+    }
+
     void viewPdf(String filename, String filePath){
-        System.out.println("Path: "+filePath + "/" + filename);
         File f = new File(filePath, filename);
         Uri path = Uri.fromFile(f);
 
@@ -281,15 +308,14 @@ public class MainActivity extends AppCompatActivity {
                     myPdfDocument.finishPage(myPage1);
                     String fname = pid[1];
                     fname += ".pdf";
-                    fileList.add(fname);
                     File pdfFile = new File(sb3.toString(), fname);
-                    filePathList.add(sb3.toString());
                     try {
                         myPdfDocument.writeTo(new FileOutputStream(pdfFile));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     myPdfDocument.close();
+                    refreshList();
                 }
             } else {
                 Log.d("Cannot Store:", "File");
@@ -336,8 +362,6 @@ public class MainActivity extends AppCompatActivity {
             sb.append(this.msg);
             sb.append("\n");
             textView.setText(sb.toString());
-            directoryList = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_expandable_list_item_1, fileList);
-            listView.setAdapter(directoryList);
         }
     }
 
