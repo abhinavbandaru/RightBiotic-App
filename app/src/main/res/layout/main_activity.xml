@@ -2,9 +2,10 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent" android:background="@color/white">
+    
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:gravity="center"
+        android:layout_height="wrap_content" android:gravity="center" 
         android:id="@+id/layoutTitleMain"
         android:layout_marginTop="20sp"
         android:layout_centerHorizontal="true">
@@ -32,7 +33,7 @@
             android:layout_toRightOf="@+id/textB"
             android:textColor="@color/black"/>
     </RelativeLayout>
-
+    
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -75,7 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="110dp"
-            android:text="Server Not Started"
+            android:text="Connect to Wifi"
             android:id="@+id/serverAddress"
             android:textColor="@color/dullWhite"
             android:layout_toRightOf="@+id/textCurrentIP"
@@ -93,109 +94,26 @@
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
+        android:text="About"
+        android:textSize="20dp"
+        android:id="@+id/buttonAbout"
+        android:background="@drawable/button_rectangle"
+        android:textColor="@color/black"
+        android:elevation="2dp"
+        android:elegantTextHeight="true"/>
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
         android:id="@+id/buttonOpenFiles"
         android:layout_marginBottom="20dp"
         android:onClick="goToFiles"
         android:text="open files"
         android:textSize="20dp"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/buttonAbout"
         android:background="@drawable/button_rectangle_green"
         android:textColor="@color/black"
         android:elevation="2dp"/>
-
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Doctor's Name"
-        android:gravity="center"
-        android:id="@+id/textDoctorName"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="100dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Name"
-        android:gravity="center"
-        android:id="@+id/textPatientName"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="100dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Age"
-        android:id="@+id/textPatientAge"
-        android:gravity="center"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="50dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Gender"
-        android:id="@+id/textPatientGender"
-        android:gravity="center"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="50dp"/>
-    <EditText
-        android:layout_width="220dp"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Sample Date (DD/MM/YY)"
-        android:id="@+id/textSampleDate"
-        android:layout_marginLeft="10dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="150dp"/>
-<!--    <LinearLayout-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginLeft="15sp"-->
-<!--        android:layout_marginTop="10sp">-->
-<!--        <TextView-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Data Folder:      "-->
-<!--            android:textColor="@color/dullWhite"-->
-<!--            android:textSize="17sp"/>-->
-<!--        <TextView-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text=""-->
-<!--            android:id="@+id/pathOfFolder"-->
-<!--            android:layout_marginLeft="10sp"-->
-<!--            android:textColor="@color/dullWhite"-->
-<!--            android:textSize="17sp"/>-->
-<!--    </LinearLayout>-->
-
-<!--    <LinearLayout-->
-<!--        android:layout_marginLeft="11sp"-->
-<!--        android:layout_marginTop="10sp"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content">-->
-<!--        <Button-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text="Open Files"-->
-<!--            android:id="@+id/showFiles"/>-->
-<!--    </LinearLayout>-->
-<!--    <ScrollView-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_gravity="center">-->
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:id="@+id/outputTextView"/>
-<!--    </ScrollView>-->
-
-<!--    <ListView-->
-<!--        android:id="@+id/pdfListView"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content">-->
-
-<!--    </ListView>-->
-
 </RelativeLayout>

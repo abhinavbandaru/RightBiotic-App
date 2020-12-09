@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="@color/white"
+    style="@style/TextAppearance.Theme">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_marginTop="10dp"
+        android:layout_height="wrap_content" android:gravity="center"
+        android:id="@+id/layoutTitleFiles">
+        <TextView
+            android:layout_width="90dp"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:id="@+id/textFILES"
+            android:textSize="30dp"
+            android:text="FILES"
+            android:textColor="@color/black"
+            android:background="@drawable/button_rectangle"
+            android:backgroundTint="#72C82E"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/layoutTitleFiles"
+        style="@style/TextAppearance.Theme">
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:id="@+id/pdfListView"
+            android:layout_height="wrap_content"
+            style="@style/ListView" />
+    </RelativeLayout>
+
+
+</RelativeLayout>
