@@ -20,20 +20,15 @@ import android.text.format.Formatter;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import com.github.barteksc.pdfviewer.PDFView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -58,16 +53,13 @@ public class MainActivity extends AppCompatActivity {
     float[] PP1_630nm = new float[8], PP2_630nm = new float[8], PP3_630nm = new float[8], PP4_630nm = new float[8], PP5_630nm = new float[8], PP6_630nm = new float[8], PP7_630nm = new float[8], PP8_630nm = new float[8];
     float[] Pi_450nm = new float[8]; float[] PiN_450nm = new float[8];
     float[] Pi_630nm = new float[8]; float[] PiN_630nm = new float[8];
-    TextView ipadd;
-    Button openFiles;
+    TextView serverAddress;
     TextView outputView;
-    TextView pathDir;
     String[] permissions = {"android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE",
             "android.permission.ACCESS_WIFI_STATE", "android.permission.INTERNET"};
     List<String> fileList;
     List<String> filePathList;
-    ListView listView;
 
     public Uri selectedFile;
     public static ServerSocket serverSocket;
@@ -79,26 +71,11 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ActivityCompat.requestPermissions(this, this.permissions, 1);
+        ActivityCompat.requestPermissions(this, this.permissions, 1); //asking storage permission
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
-        SharedPreferences sharedPreferences = getSharedPreferences(MyPREFERENCES, 0);
-//        listView = findViewById(R.id.pdfListView);
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                viewPdf(fileList.get(i), filePathList.get(i));
-//            }
-//        });
-        this.sharedpreferences = sharedPreferences;
-//        this.pathDir.setText(sharedPreferences.getString(Path, "/storage/sdcard0/RightBiotic"));
-//        this.openFiles = findViewById(R.id.showFiles);
-//        openFiles.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick (View v){
-//                performSearch();
-//            }
-//        });
+        this.sharedpreferences = getSharedPreferences(MyPREFERENCES, 0);
+        //checking if the user is connected to mobile data
         ConnectivityManager connMgr =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         boolean isWifiConn = false;
@@ -112,70 +89,32 @@ public class MainActivity extends AppCompatActivity {
                 isMobileConn |= networkInfo.isConnected();
             }
         }
+        //the check function
         if(!isWifiConn){
-            this.ipadd = findViewById(R.id.serverAddress);
-            ipadd.setText("Please Connect to a Wifi and restart the App");
+            this.serverAddress = findViewById(R.id.serverAddress);
+            serverAddress.setText("Please Connect to a Wifi and restart the App");
         } else {
-            this.ipadd = findViewById(R.id.serverAddress);
+            //initializing fields if the user is connected over wifi
+            this.serverAddress = findViewById(R.id.serverAddress);
             WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
             String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-            this.ipadd.setText(ip);
+            this.serverAddress.setText(ip);
             this.outputView = findViewById(R.id.outputTextView);
             outputView.setMovementMethod(new ScrollingMovementMethod());
         }
     }
 
-    void refreshList(){
-        fileList = new ArrayList<>();
-        filePathList = new ArrayList<>();
-        String path = Environment.getExternalStorageDirectory().toString() + "/RightBiotic";
-        System.out.println("Path: " + path);
-        File rbFolder = new File(path);
-        List<File> allFiles = getListFiles(rbFolder);
-        for(File f: allFiles){
-            System.out.println(f.getName());
-            fileList.add(f.getName());
-            filePathList.add(f.getParent());
-        }
-        directoryList = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_expandable_list_item_1, fileList);
-//        listView.setAdapter(directoryList);
-    }
-
-    List<File> getListFiles(File parentDir) {
-        ArrayList<File> inFiles = new ArrayList<File>();
-        File[] files = parentDir.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                inFiles.addAll(getListFiles(file));
-            } else {
-                inFiles.add(file);
-            }
-        }
-        return inFiles;
-    }
-
-    void viewPdf(String filename, String filePath){
-        File f = new File(filePath, filename);
-        Uri path = Uri.fromFile(f);
-
-        // Setting the intent for pdf reader
-        Intent pdfIntent = new Intent(Intent.ACTION_VIEW);
-        pdfIntent.setDataAndType(path, "application/pdf");
-        pdfIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(pdfIntent);
-    }
-
     class CommunicationThread implements Runnable {
-        List<String> Datalist = new ArrayList();
+        List<String> dataList = new ArrayList();
         private Socket clientSocket;
         private BufferedReader input;
-        String ipadd = "";
-        int nooflines = 0;
+        String serverAddress = "";
+        int noOfLines = 0;
         String read;
 
         CommunicationThread(Socket clientSocket2) {
             this.clientSocket = clientSocket2;
-            this.ipadd = clientSocket2.getInetAddress().toString();
+            this.serverAddress = clientSocket2.getInetAddress().toString(); //receiving server address
             try {
                 this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
             } catch (IOException e) {
@@ -187,23 +126,24 @@ public class MainActivity extends AppCompatActivity {
             try {
                 String readLine = this.input.readLine();
                 this.read = readLine;
-                this.Datalist.add(readLine);
-                MainActivity.this.updateConversationHandler.post(new updateUIThread(this.read, this.ipadd));
+                this.dataList.add(readLine);
+                MainActivity.this.updateConversationHandler.post(new updateUIThread(this.read, this.serverAddress));
             } catch (IOException e) {
                 e.printStackTrace();
             }
             while (true) {
                 try {
+                    //receiving the file and storing it line by line
                     String readLine2 = this.input.readLine();
                     if (readLine2 == null) {
                         break;
                     }
-                    this.nooflines++;
+                    this.noOfLines++;
                     if (readLine2.contains("END")) {
-                        this.Datalist.add(readLine2);
+                        this.dataList.add(readLine2);
                         break;
                     }
-                    this.Datalist.add(readLine2);
+                    this.dataList.add(readLine2);
                 } catch (IOException e2) {
                     e2.printStackTrace();
                 }
@@ -218,71 +158,73 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e4) {
                 e4.printStackTrace();
             }
-            if (MainActivity.this.MakeDirectory((String) this.Datalist.get(1))) {
+
+            if (MainActivity.this.MakeDirectory((String) this.dataList.get(1))) {
                 MainActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
                         //MainActivity.this.pathDir.setText(MainActivity.this.finalPath);
                     }
                 });
-                int y = 60;
+                int marginTop = 60;
                 new File(MainActivity.this.finalPath);
-                String[] pid = ((String) this.Datalist.get(0)).split(":");
-                System.out.println(Datalist);
+                String[] pid = ((String) this.dataList.get(0)).split(":"); //getting patient id
+                System.out.println(dataList);
                 if (pid.length > 0 && pid[1].length() > 1) {
-                    StringBuilder sb3 = new StringBuilder();
+                    //creating pdf document from file data
+                    StringBuilder sb3 = new StringBuilder(); //contains final path of the file
                     sb3.append(Environment.getExternalStorageDirectory());
                     sb3.append(MainActivity.this.finalPath);
 
                     PdfDocument myPdfDocument = new PdfDocument();
                     Paint myPaint = new Paint();
-                    myPaint.setTextSize(12f);
+                    myPaint.setTextSize(12f); //font size
                     PdfDocument.PageInfo myPageInfo1 = new PdfDocument.PageInfo.Builder(595,842,1).create();
                     PdfDocument.Page myPage1 = myPdfDocument.startPage(myPageInfo1);
                     Canvas canvas  = myPage1.getCanvas();
-                    canvas.drawLine(30,  22+y, myPageInfo1.getPageWidth()-30, 22+y, myPaint);
-                    canvas.drawLine(30,  47+y, myPageInfo1.getPageWidth()-30, 47+y, myPaint);
-                    canvas.drawLine(30,  65+y, myPageInfo1.getPageWidth()-30, 65+y, myPaint);
-                    canvas.drawLine(30,  85+y, myPageInfo1.getPageWidth()-30, 85+y, myPaint);
-                    canvas.drawLine(30,  105+y, myPageInfo1.getPageWidth()-30, 105+y, myPaint);
-                    canvas.drawLine(30,  22+y, 30, 105+y, myPaint);
-                    canvas.drawLine(myPageInfo1.getPageWidth()-30,  22+y, myPageInfo1.getPageWidth()-30, 105+y, myPaint);
-                    canvas.drawLine(345,  47+y, 345, 85+y, myPaint);
-                    canvas.drawLine(30,  47+y, myPageInfo1.getPageWidth()-30, 47+y, myPaint);
+                    canvas.drawLine(30,  22+marginTop, myPageInfo1.getPageWidth()-30, 22+marginTop, myPaint);
+                    canvas.drawLine(30,  47+marginTop, myPageInfo1.getPageWidth()-30, 47+marginTop, myPaint);
+                    canvas.drawLine(30,  65+marginTop, myPageInfo1.getPageWidth()-30, 65+marginTop, myPaint);
+                    canvas.drawLine(30,  85+marginTop, myPageInfo1.getPageWidth()-30, 85+marginTop, myPaint);
+                    canvas.drawLine(30,  105+marginTop, myPageInfo1.getPageWidth()-30, 105+marginTop, myPaint);
+                    canvas.drawLine(30,  22+marginTop, 30, 105+marginTop, myPaint);
+                    canvas.drawLine(myPageInfo1.getPageWidth()-30,  22+marginTop, myPageInfo1.getPageWidth()-30, 105+marginTop, myPaint);
+                    canvas.drawLine(345,  47+marginTop, 345, 85+marginTop, myPaint);
+                    canvas.drawLine(30,  47+marginTop, myPageInfo1.getPageWidth()-30, 47+marginTop, myPaint);
                     myPaint.setTextSize(18f);
                     myPaint.setFakeBoldText(true);
                     myPaint.setUnderlineText(true);
                     myPaint.setTextAlign(Paint.Align.CENTER);
-                    canvas.drawText("Laboratory Report", 298, 40+y,myPaint);
+                    canvas.drawText("Laboratory Report", 298, 40+marginTop,myPaint);
                     myPaint.setTextSize(12f);
                     myPaint.setFakeBoldText(false);
                     myPaint.setTextAlign(Paint.Align.LEFT);
                     myPaint.setUnderlineText(false);
                     EditText pname = findViewById(R.id.textPatientName), dname = findViewById(R.id.textDoctorName), page = findViewById(R.id.textPatientAge), psex = findViewById(R.id.textPatientGender),sdate = findViewById(R.id.textSampleDate);
                     String patientName =  pname.getText().toString(), age = page.getText().toString(), sex = psex.getText().toString(), sampleDate = sdate.getText().toString(), reportDate, referredBy = "Dr. " + dname.getText().toString();
-                    String[] te = Datalist.get(1).split(" ");
+                    String[] te = dataList.get(1).split(" ");
                     reportDate = te[0];
-                    canvas.drawText("Patient Name : "+patientName, 32, 60+y,myPaint);
-                    canvas.drawText("Sample Date : "+sampleDate, 350, 60+y,myPaint);
-                    canvas.drawText("Age/Sex           : "+age + " / "+sex, 32, 80+y,myPaint);
-                    canvas.drawText("Report Date   : "+reportDate, 350, 80+y,myPaint);
-                    canvas.drawText("Referred By      : "+referredBy, 32, 100+y,myPaint);
-                    String f = (String) Datalist.get(2);
+                    canvas.drawText("Patient Name : "+patientName, 32, 60+marginTop,myPaint);
+                    canvas.drawText("Sample Date : "+sampleDate, 350, 60+marginTop,myPaint);
+                    canvas.drawText("Age/Sex           : "+age + " / "+sex, 32, 80+marginTop,myPaint);
+                    canvas.drawText("Report Date   : "+reportDate, 350, 80+marginTop,myPaint);
+                    canvas.drawText("Referred By      : "+referredBy, 32, 100+marginTop,myPaint);
+                    String f = (String) dataList.get(2);
                     myPaint.setTextSize(18f);
                     myPaint.setTextAlign(Paint.Align.CENTER);
                     myPaint.setUnderlineText(true);
                     myPaint.setFakeBoldText(true);
-                    canvas.drawText("CULTURE  REPORT",298, 130+y,myPaint);
+                    canvas.drawText("CULTURE  REPORT",298, 130+marginTop,myPaint);
                     myPaint.setTextSize(12f);
                     myPaint.setTextAlign(Paint.Align.LEFT);
                     myPaint.setUnderlineText(false);
                     myPaint.setFakeBoldText(false);
-                    canvas.drawText("Sample                 : "+f, 30, 150+y, myPaint);
-                    f = (String) Datalist.get(3);
-                    canvas.drawText("Organism Name : "+f, 30, 170+y, myPaint);
-                    f = (String) Datalist.get(4);
+                    canvas.drawText("Sample                 : "+f, 30, 150+marginTop, myPaint);
+                    f = (String) dataList.get(3);
+                    canvas.drawText("Organism Name : "+f, 30, 170+marginTop, myPaint);
+                    f = (String) dataList.get(4);
 
-                    canvas.drawText("Volume                 : "+f, 30, 190+y, myPaint);
-                    int startY = 200+y;
+                    canvas.drawText("Volume                 : "+f, 30, 190+marginTop, myPaint);
+                    int startY = 200+marginTop;
                     canvas.drawLine(30, startY, myPageInfo1.getPageWidth()-30, startY, myPaint);
                     myPaint.setFakeBoldText(true);
                     canvas.drawText("S.no", 32, startY + 15, myPaint);
@@ -290,9 +232,10 @@ public class MainActivity extends AppCompatActivity {
                     canvas.drawText("Result",  315, startY+15, myPaint);
                     myPaint.setFakeBoldText(false);
                     canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
-                    for(int i = 5; i+1<Datalist.size(); i++){
-                        startY += 20;
-                        String[] k1 = Datalist.get(i).split(",");
+                    //making the table
+                    for(int i = 5; i+1< dataList.size(); i++){
+                        startY += 20; //updating the startY after table row complete
+                        String[] k1 = dataList.get(i).split(",");
                         k1[0] = k1[0].trim();
                         canvas.drawText(Integer.toString(i-4), 40, startY + 15, myPaint);
                         canvas.drawText(k1[0], 70, startY + 15, myPaint);
@@ -308,10 +251,10 @@ public class MainActivity extends AppCompatActivity {
                         canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
                     }
                     startY += 20;
-                    canvas.drawLine(310, 200+y, 310, startY, myPaint);
-                    canvas.drawLine(30, 200+y, 30, startY, myPaint);
-                    canvas.drawLine(565, 200+y, 565, startY, myPaint);
-                    canvas.drawLine(60, 200+y, 60, startY, myPaint);
+                    canvas.drawLine(310, 200+marginTop, 310, startY, myPaint);
+                    canvas.drawLine(30, 200+marginTop, 30, startY, myPaint);
+                    canvas.drawLine(565, 200+marginTop, 565, startY, myPaint);
+                    canvas.drawLine(60, 200+marginTop, 60, startY, myPaint);
                     startY += 20;
                     canvas.drawText("R: RESISTANT ", 30, startY,myPaint);
                     canvas.drawText("S: SENSITIVE ", 290, startY,myPaint);
@@ -359,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
             }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    new Thread(new CommunicationThread(serverSocket.accept())).start();
+                    new Thread(new CommunicationThread(serverSocket.accept())).start(); //starting server
                 } catch (IOException e2) {
                     e2.printStackTrace();
                 }
@@ -391,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public String readText(String input){
+    public String readText(String input){ //reading text from file
         File file = new File(Environment.getExternalStorageDirectory(), input);
         StringBuilder sb = new StringBuilder();
         try{
@@ -416,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void StartServer(View view) {
+    public void StartServer(View view) { //driver function of start server
         if(serverStatus){
             Toast.makeText(this, "Server Already Running", Toast.LENGTH_SHORT).show();
             return;
@@ -434,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions2, grantResults);
     }
 
-    public boolean MakeDirectory(String pa) {
+    public boolean MakeDirectory(String pa) { //make directory if it does not exist
         String[] das = pa.split("[/:]");
         String[] yea = das[2].split(" ");
         String str = "/";
@@ -487,12 +430,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void goToFiles(View view){
+    public void goToFiles(View view){ //open files page
         Intent i = new Intent(getApplicationContext(),FilesActivity.class);
         startActivity(i);
     }
 
-    void calcFunction() throws IOException {
+    void calcFunction() throws IOException { //calculation function for future use (read csv directly)
         String pathToCsv = "";
         BufferedReader csvReader = new BufferedReader(new FileReader(pathToCsv));
         String row;

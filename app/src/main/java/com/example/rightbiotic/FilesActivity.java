@@ -34,7 +34,7 @@ public class FilesActivity extends AppCompatActivity {
         });
     }
 
-    void refreshList(){
+    void refreshList(){ //refresh the list
         fileList = new ArrayList<>();
         filePathList = new ArrayList<>();
         String path = Environment.getExternalStorageDirectory().toString() + "/RightBiotic";
@@ -50,7 +50,7 @@ public class FilesActivity extends AppCompatActivity {
         listView.setAdapter(directoryList);
     }
 
-    List<File> getListFiles(File parentDir) {
+    List<File> getListFiles(File parentDir) { //get list of files from RightBiotic folder
         ArrayList<File> inFiles = new ArrayList<File>();
         File[] files = parentDir.listFiles();
         if(files == null){
@@ -66,7 +66,7 @@ public class FilesActivity extends AppCompatActivity {
         return inFiles;
     }
 
-    void viewPdf(String filename, String filePath){
+    void viewPdf(String filename, String filePath){ //opens pdf file
         File f = new File(filePath, filename);
         Uri path = Uri.fromFile(f);
 
