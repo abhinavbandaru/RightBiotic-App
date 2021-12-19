@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="@color/white">
+
+
+    <Button
+        android:id="@+id/saveDataButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/button_rectangle_green"
+        android:elevation="2dp"
+        android:onClick="SaveClicked"
+        android:text="Save"
+        android:textColor="@color/black"
+        android:textSize="20dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Doctor's Name: "
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/doctorNameTag"
+        android:layout_marginTop="55sp"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <EditText
+        android:id="@+id/doctorName"
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="200sp"
+        android:layout_marginTop="50sp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Patient's Name: "
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/patientNameTag"
+        android:layout_marginTop="30sp"
+        android:layout_below="@id/doctorNameTag"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <EditText
+        android:id="@+id/patientName"
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/doctorNameTag"
+        android:layout_marginLeft="200sp"
+        android:layout_marginTop="30sp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Patient's Age: "
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/patientAgeTag"
+        android:layout_marginTop="30sp"
+        android:layout_below="@id/patientNameTag"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <EditText
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="200sp"
+        android:layout_marginTop="30sp"
+        android:id="@+id/patientAge"
+        android:layout_below="@+id/patientNameTag"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Patient's Gender: "
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/patientSexTag"
+        android:layout_marginTop="30sp"
+        android:layout_below="@id/patientAgeTag"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <EditText
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="200sp"
+        android:layout_marginTop="30sp"
+        android:layout_below="@+id/patientAgeTag"
+        android:id="@+id/patientSex"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sample Date "
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/sampleDateTag"
+        android:layout_marginTop="30sp"
+        android:layout_below="@id/patientSexTag"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <EditText
+        android:layout_width="150sp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="200sp"
+        android:layout_marginTop="30sp"
+        android:layout_below="@+id/patientSexTag"
+        android:hint="dd/mm/yyyy"
+        android:id="@+id/sampleDate"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Logo:"
+        android:layout_marginTop="17sp"
+        android:textSize="20sp"
+        android:textColor="@color/black"
+        android:id="@+id/select_image_tag"
+        android:layout_below="@id/sampleDate"
+        android:layout_marginLeft="20sp"
+
+        />
+
+    <Button
+        android:id="@+id/select_image_buttton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/sampleDate"
+        android:layout_marginLeft="70sp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="10sp"
+        android:layout_toRightOf="@id/select_image_tag"
+        android:elevation="2dp"
+        android:onClick="SelectImage"
+        android:text=" Select Image "
+        android:background="@drawable/button_rectangle_green"
+        android:textColor="@color/black"
+        android:textSize="20dp" />
+
+
+
+
+
+</RelativeLayout>

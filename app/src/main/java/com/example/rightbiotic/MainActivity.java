@@ -3,15 +3,21 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Picture;
 import android.graphics.pdf.PdfDocument;
+import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -41,6 +47,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class MainActivity extends AppCompatActivity {
     public static final String MyPREFERENCES = "MyPrefs";
     public static final String Path = "path";
@@ -58,8 +65,6 @@ public class MainActivity extends AppCompatActivity {
     String[] permissions = {"android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE",
             "android.permission.ACCESS_WIFI_STATE", "android.permission.INTERNET"};
-    List<String> fileList;
-    List<String> filePathList;
 
     public Uri selectedFile;
     public static ServerSocket serverSocket;
@@ -112,6 +117,20 @@ public class MainActivity extends AppCompatActivity {
         int noOfLines = 0;
         String read;
 
+        boolean checkGrpA(String antibiotic){
+            return antibiotic.equalsIgnoreCase("Amoxicillin") || antibiotic.equalsIgnoreCase("Gentamicin") ||
+                    antibiotic.equalsIgnoreCase("Amikacin") || antibiotic.equalsIgnoreCase("Ciprofloxacin") ||
+                    antibiotic.equalsIgnoreCase("Levofloxacin") || antibiotic.equalsIgnoreCase("Cefepime") ||
+                    antibiotic.equalsIgnoreCase("Tobramycin") || antibiotic.equalsIgnoreCase("Cefazolin") ||
+                    antibiotic.equalsIgnoreCase("Imipenem") || antibiotic.equalsIgnoreCase("Piperacillin-Tazobactam") ||
+                    antibiotic.equalsIgnoreCase("Cefotaxime") || antibiotic.equalsIgnoreCase("Cefuroxime");
+        }
+        boolean checkGrpB(String antibiotic){
+            return antibiotic.equalsIgnoreCase("Ofloxacin") || antibiotic.equalsIgnoreCase("Cefixime") ||
+                    antibiotic.equalsIgnoreCase("Netilmicin") || antibiotic.equalsIgnoreCase("Ceftazidime") ||
+                    antibiotic.equalsIgnoreCase("Aztreonam");
+        }
+
         CommunicationThread(Socket clientSocket2) {
             this.clientSocket = clientSocket2;
             this.serverAddress = clientSocket2.getInetAddress().toString(); //receiving server address
@@ -158,14 +177,14 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e4) {
                 e4.printStackTrace();
             }
-
-            if (MainActivity.this.MakeDirectory((String) this.dataList.get(1))) {
+            Log.d("File Location: ", dataList.get(1));
+            if (MainActivity.this.MakeDirectory(this.dataList.get(1))) {
                 MainActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
                         //MainActivity.this.pathDir.setText(MainActivity.this.finalPath);
                     }
                 });
-                int marginTop = 60;
+                int marginTop = 100;
                 new File(MainActivity.this.finalPath);
                 String[] pid = ((String) this.dataList.get(0)).split(":"); //getting patient id
                 System.out.println(dataList);
@@ -174,13 +193,28 @@ public class MainActivity extends AppCompatActivity {
                     StringBuilder sb3 = new StringBuilder(); //contains final path of the file
                     sb3.append(Environment.getExternalStorageDirectory());
                     sb3.append(MainActivity.this.finalPath);
+                    Bitmap bitmap;
+                    if(SettingsActivity.logoPath.equals(""))
+                        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.rblogo);
+                    else
+                    bitmap = BitmapFactory.decodeFile(SettingsActivity.logoPath);//BitmapFactory.decodeResource(getResources(), SettingsActivity.logoPath);
 
                     PdfDocument myPdfDocument = new PdfDocument();
-                    Paint myPaint = new Paint();
-                    myPaint.setTextSize(12f); //font size
+
+                    int width = 100;
+                    int height = 100;
                     PdfDocument.PageInfo myPageInfo1 = new PdfDocument.PageInfo.Builder(595,842,1).create();
                     PdfDocument.Page myPage1 = myPdfDocument.startPage(myPageInfo1);
                     Canvas canvas  = myPage1.getCanvas();
+                    Paint paint = new Paint();
+                    paint.setColor(Color.parseColor("#ffffff"));
+                    canvas.drawPaint(paint);
+                    bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+                    paint.setColor(Color.BLUE);
+                    canvas.drawBitmap(bitmap, 30, 20, null);
+                    Paint myPaint = new Paint();
+                    myPaint.setTextSize(12f); //font size
+                    canvas.drawLine(20, 820, 575, 820, myPaint);
                     canvas.drawLine(30,  22+marginTop, myPageInfo1.getPageWidth()-30, 22+marginTop, myPaint);
                     canvas.drawLine(30,  47+marginTop, myPageInfo1.getPageWidth()-30, 47+marginTop, myPaint);
                     canvas.drawLine(30,  65+marginTop, myPageInfo1.getPageWidth()-30, 65+marginTop, myPaint);
@@ -199,8 +233,8 @@ public class MainActivity extends AppCompatActivity {
                     myPaint.setFakeBoldText(false);
                     myPaint.setTextAlign(Paint.Align.LEFT);
                     myPaint.setUnderlineText(false);
-                    EditText pname = findViewById(R.id.textPatientName), dname = findViewById(R.id.textDoctorName), page = findViewById(R.id.textPatientAge), psex = findViewById(R.id.textPatientGender),sdate = findViewById(R.id.textSampleDate);
-                    String patientName =  pname.getText().toString(), age = page.getText().toString(), sex = psex.getText().toString(), sampleDate = sdate.getText().toString(), reportDate, referredBy = "Dr. " + dname.getText().toString();
+                    //EditText pname = SettingsActivity.patientName, dname = SettingsActivity.doctorNameEditText, page = SettingsActivity.patientAgeEditText, psex = SettingsActivity.patientSexEditText, sdate = findViewById(R.id.textSampleDate);
+                    String patientName =  SettingsActivity.patientName, age = SettingsActivity.patientAge, sex = SettingsActivity.patientSex, sampleDate = SettingsActivity.sampleDate, reportDate, referredBy = "Dr. " + SettingsActivity.doctorName;
                     String[] te = dataList.get(1).split(" ");
                     reportDate = te[0];
                     canvas.drawText("Patient Name : "+patientName, 32, 60+marginTop,myPaint);
@@ -218,12 +252,12 @@ public class MainActivity extends AppCompatActivity {
                     myPaint.setTextAlign(Paint.Align.LEFT);
                     myPaint.setUnderlineText(false);
                     myPaint.setFakeBoldText(false);
-                    canvas.drawText("Sample                 : "+f, 30, 150+marginTop, myPaint);
+                    canvas.drawText("Sample                   :   "+f, 30, 150+marginTop, myPaint);
                     f = (String) dataList.get(3);
-                    canvas.drawText("Organism Name : "+f, 30, 170+marginTop, myPaint);
+                    canvas.drawText("Organism Name   :   "+f, 30, 170+marginTop, myPaint);
                     f = (String) dataList.get(4);
 
-                    canvas.drawText("Volume                 : "+f, 30, 190+marginTop, myPaint);
+                    canvas.drawText("CFU                         :   "+f, 30, 190+marginTop, myPaint);
                     int startY = 200+marginTop;
                     canvas.drawLine(30, startY, myPageInfo1.getPageWidth()-30, startY, myPaint);
                     myPaint.setFakeBoldText(true);
@@ -233,23 +267,94 @@ public class MainActivity extends AppCompatActivity {
                     myPaint.setFakeBoldText(false);
                     canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
                     //making the table
+                    List<List<String>> groups = new ArrayList<>();
+                    List<String> groupA = new ArrayList<>(), groupB = new ArrayList<>(), groupC = new ArrayList<>();
+                    groups.add(groupA); groups.add(groupB); groups.add(groupC);
                     for(int i = 5; i+1< dataList.size(); i++){
-                        startY += 20; //updating the startY after table row complete
                         String[] k1 = dataList.get(i).split(",");
                         k1[0] = k1[0].trim();
-                        canvas.drawText(Integer.toString(i-4), 40, startY + 15, myPaint);
-                        canvas.drawText(k1[0], 70, startY + 15, myPaint);
-                        if(k1[1].equals("S")){
-                            myPaint.setColor(Color.rgb(34,139,34));
-                        } else if(k1[1].equals("R")){
-                            myPaint.setColor(Color.rgb(255,0,0));
-                        }
-                        myPaint.setFakeBoldText(true);
-                        canvas.drawText(k1[1],  315, startY+15, myPaint);
-                        myPaint.setFakeBoldText(false);
-                        myPaint.setColor(Color.BLACK);
-                        canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
+                        if(checkGrpA(k1[0]))
+                            groups.get(0).add(dataList.get(i));
+                        else if(checkGrpB(k1[0]))
+                            groups.get(1).add(dataList.get(i));
+                        else
+                            groups.get(2).add(dataList.get(i));
                     }
+                    for(int j = 0; j<3; j++){
+                        startY+=20;
+                        char groupNumber = (char) ('A' +j);
+                        myPaint.setFakeBoldText(true);
+                        canvas.drawText("Group: " + groupNumber, 65, startY+15, myPaint);
+                        myPaint.setFakeBoldText(false);
+                        canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
+                        for(int i = 0; i <groups.get(j).size(); i++){
+                            startY += 20;
+                            Log.d("String", groups.get(j).get(i));
+                            String[] k1 = groups.get(j).get(i).split(",");
+                            k1[0] = k1[0].trim();
+                            canvas.drawText(k1[0], 65, startY+15, myPaint);
+
+                            canvas.drawText(String.valueOf(groupNumber) + (i + 1), 35, startY + 15, myPaint);
+                            if(k1[1].equals("S")){
+                                myPaint.setColor(Color.rgb(34,139,34));
+                            } else if(k1[1].equals("R")){
+                                myPaint.setColor(Color.rgb(255,0,0));
+                            }
+                            myPaint.setFakeBoldText(true);
+                            canvas.drawText(k1[1],  315, startY+15, myPaint);
+                            myPaint.setFakeBoldText(false);
+                            myPaint.setColor(Color.BLACK);
+                            canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
+                            if(startY > 680){
+                                startY += 20;
+                                canvas.drawLine(310, 200+marginTop, 310, startY, myPaint);
+                                canvas.drawLine(30, 200+marginTop, 30, startY, myPaint);
+                                canvas.drawLine(565, 200+marginTop, 565, startY, myPaint);
+                                canvas.drawLine(60, 200+marginTop, 60, startY, myPaint);
+                                startY += 20;
+                                canvas.drawText("R: RESISTANT ", 30, startY,myPaint);
+                                canvas.drawText("S: SENSITIVE ", 290, startY,myPaint);
+                                canvas.drawText("I: INTERMEDIATE ", 470, startY,myPaint);
+                                myPdfDocument.finishPage(myPage1);
+                                myPage1 = myPdfDocument.startPage(myPageInfo1);
+                                canvas = myPage1.getCanvas();
+                                startY = marginTop;
+                            }
+                        }
+                    }
+
+//                    for(int i = 5; i+1< dataList.size(); i++){
+//                        startY += 20; //updating the startY after table row complete
+//                        String[] k1 = dataList.get(i).split(",");
+//                        k1[0] = k1[0].trim();
+//                        canvas.drawText(Integer.toString(i-4), 40, startY + 15, myPaint);
+//                        canvas.drawText(k1[0], 70, startY + 15, myPaint);
+//                        if(k1[1].equals("S")){
+//                            myPaint.setColor(Color.rgb(34,139,34));
+//                        } else if(k1[1].equals("R")){
+//                            myPaint.setColor(Color.rgb(255,0,0));
+//                        }
+//                        myPaint.setFakeBoldText(true);
+//                        canvas.drawText(k1[1],  315, startY+15, myPaint);
+//                        myPaint.setFakeBoldText(false);
+//                        myPaint.setColor(Color.BLACK);
+//                        canvas.drawLine(30, startY + 20, myPageInfo1.getPageWidth()-30, startY+20, myPaint);
+//                        if(startY > 680){
+//                            startY += 20;
+//                            canvas.drawLine(310, 200+marginTop, 310, startY, myPaint);
+//                            canvas.drawLine(30, 200+marginTop, 30, startY, myPaint);
+//                            canvas.drawLine(565, 200+marginTop, 565, startY, myPaint);
+//                            canvas.drawLine(60, 200+marginTop, 60, startY, myPaint);
+//                            startY += 20;
+//                            canvas.drawText("R: RESISTANT ", 30, startY,myPaint);
+//                            canvas.drawText("S: SENSITIVE ", 290, startY,myPaint);
+//                            canvas.drawText("I: INTERMEDIATE ", 470, startY,myPaint);
+//                            myPdfDocument.finishPage(myPage1);
+//                            myPage1 = myPdfDocument.startPage(myPageInfo1);
+//                            canvas = myPage1.getCanvas();
+//                            startY = marginTop;
+//                        }
+//                    }
                     startY += 20;
                     canvas.drawLine(310, 200+marginTop, 310, startY, myPaint);
                     canvas.drawLine(30, 200+marginTop, 30, startY, myPaint);
@@ -383,16 +488,28 @@ public class MainActivity extends AppCompatActivity {
         String str = "/";
         StringBuilder sb = new StringBuilder();
         sb.append("/RightBiotic/20");
+//        Toast.makeText(getApplicationContext(), "Folder Created", Toast.LENGTH_SHORT).show();
+
+
         sb.append(yea[0]);
         sb.append(str);
         sb.append(monthLookUp[Integer.parseInt(das[1])]);
         sb.append(str);
         sb.append(das[0]);
         this.finalPath = sb.toString();
+        Log.d("Creating folder: ", finalPath);
         File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), this.finalPath);
-        if (!mediaStorageDir.exists()) {
-            return mediaStorageDir.mkdirs();
+        File file;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            file = new File (this.getExternalFilesDir(null) + finalPath);
+        } else {
+            file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + finalPath);
         }
+
+        if (!file.exists()) {
+            return file.mkdirs();
+        }
+        finalPath = "/Android/Data/com.example.rightbiotic/files" + finalPath;
         return true;
     }
 
@@ -432,6 +549,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void goToFiles(View view){ //open files page
         Intent i = new Intent(getApplicationContext(),FilesActivity.class);
+        startActivity(i);
+    }
+    public void goToSettings(View view){ //open files page
+        Intent i = new Intent(getApplicationContext(),SettingsActivity.class);
         startActivity(i);
     }
 

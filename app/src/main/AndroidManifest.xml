@@ -41,6 +41,9 @@
         <activity android:name=".FilesActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         </activity>
+        <activity android:name=".SettingsActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        </activity>
     </application>
 
 </manifest>

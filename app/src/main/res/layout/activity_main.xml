@@ -90,65 +90,33 @@
             android:textSize="22dp"/>
     </RelativeLayout>
     <Button
-        android:layout_width="150dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:id="@+id/buttonOpenFiles"
         android:layout_marginBottom="20dp"
         android:onClick="goToFiles"
         android:text="open files"
         android:textSize="20dp"
+        android:background="@drawable/button_rectangle_green"
+        android:textColor="@color/black"
+        android:layout_above="@+id/buttonOpenSettings"
+        android:layout_centerHorizontal="true"
+        android:elevation="2dp"/>
+    <Button
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttonOpenSettings"
+        android:layout_marginBottom="20dp"
+        android:onClick="goToSettings"
         android:layout_alignParentBottom="true"
+        android:text="open settings"
+        android:textSize="20dp"
+        android:layout_centerHorizontal="true"
         android:background="@drawable/button_rectangle_green"
         android:textColor="@color/black"
         android:elevation="2dp"/>
 
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Doctor's Name"
-        android:gravity="center"
-        android:id="@+id/textDoctorName"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="100dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Name"
-        android:gravity="center"
-        android:id="@+id/textPatientName"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="100dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Age"
-        android:id="@+id/textPatientAge"
-        android:gravity="center"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="50dp"/>
-    <EditText
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Patient's Gender"
-        android:id="@+id/textPatientGender"
-        android:gravity="center"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="50dp"/>
-    <EditText
-        android:layout_width="220dp"
-        android:layout_height="50dp"
-        android:gravity="center"
-        android:layout_above="@+id/buttonOpenFiles"
-        android:hint="Sample Date (DD/MM/YY)"
-        android:id="@+id/textSampleDate"
-        android:layout_marginLeft="10dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="150dp"/>
+
 <!--    <LinearLayout-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->

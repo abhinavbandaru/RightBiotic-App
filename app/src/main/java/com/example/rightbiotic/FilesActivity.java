@@ -37,7 +37,7 @@ public class FilesActivity extends AppCompatActivity {
     void refreshList(){ //refresh the list
         fileList = new ArrayList<>();
         filePathList = new ArrayList<>();
-        String path = Environment.getExternalStorageDirectory().toString() + "/RightBiotic";
+        String path = Environment.getExternalStorageDirectory().toString() + "/Android/Data/com.example.rightbiotic/files/RightBiotic";
         System.out.println("Path: " + path);
         File rbFolder = new File(path);
         List<File> allFiles = getListFiles(rbFolder);
