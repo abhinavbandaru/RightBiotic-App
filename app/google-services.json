@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "340320810947",
+    "project_id": "rightbiotic-6b557",
+    "storage_bucket": "rightbiotic-6b557.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:340320810947:android:855222a47e185c2a452f76",
+        "android_client_info": {
+          "package_name": "com.example.rightbiotic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "340320810947-bg8geh1078vhpb85u6c2tf0910e0chp7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArXxfWjUpgBNu9Gu2F9wLiXEAn_56pb88"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "340320810947-bg8geh1078vhpb85u6c2tf0910e0chp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
